@@ -1,7 +1,4 @@
 # Toit Package File.
 
-# If no name is set, the title of the README.md is used.
-# name: PACKAGE_NAME
-
-# If no description is given, the first paragraph of the README.md is used.
-# description: PACKAGE_DESCRIPTION
+name: rs485
+description: Support for the RS-485 bus with drivers for the MAX485, SP3485 and similar chips.
