@@ -100,7 +100,7 @@ interface Rs485 implements reader.Reader:
   close -> none
 
 /**
-A UART-based RS-485 receivers.
+A UART-based RS-485 transceiver.
 
 Without any directional pins, this class is either used to simulate RS-485 communication
   over a UART line, or by a transceiver with separate read and write lines (4-wire), like the
