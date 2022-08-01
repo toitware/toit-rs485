@@ -76,7 +76,7 @@ interface Rs485 implements reader.Reader:
   The transceiver must be in write mode.
   Returns the amount of bytes that were written.
   */
-  write data -> int
+  write data from/int=0 to/int=data.size -> int
 
   /**
   Sets the mode of the transceiver.
@@ -118,11 +118,11 @@ class Rs485Uart_ implements Rs485:
   read -> ByteArray?:
     return port_.read
 
-  write data -> int:
+  write data from/int=0 to/int=data.size -> int:
     if not writing_: throw "INVALID_STATE"
     // TODO(florian): we would prefer to just call `flush` at the end of the $do_transmission, but
     // UARTs currently don't have any way to do that.
-    return port_.write data --wait
+    return port_.write data from to --wait
 
   /**
   # Inheritance:
@@ -156,8 +156,8 @@ class Rs485HalfDuplexUart_ extends Rs485Uart_:
     finally:
       set_mode --read
 
-  write data -> int:
-    result := super data
+  write data from/int=0 to/int=data.size -> int:
+    result := super data from to
     return result
 
 /**
