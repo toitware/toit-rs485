@@ -15,8 +15,8 @@ interface Rs485 implements reader.Reader:
   The $read_enable pin must be active low and enables reading.
   The $write_enable pin must be active high and enables writing.
 
-  Note that it is safe to use a simple pin and connect it to the the RE and DE pins of external chips.
-    In that case use $(constructor --rts --rx --tx --baud_rate) instead.
+  It is recommended to use a single pin and connect to the RE and DE pins of the
+    external chip and use $(Rs485.constructor --rts --rx --tx --baud_rate) instead.
 
   Example chips: Max485, SP3485.
   */
@@ -42,7 +42,7 @@ interface Rs485 implements reader.Reader:
   Example breakout board: Sparkfun BOB-10124
   */
   constructor --rts/gpio.Pin --rx/gpio.Pin --tx/gpio.Pin --baud_rate/int:
-    return Rs485Uart1_ --rts=rts --rx=rx --tx=tx --baud_rate=baud_rate
+    return Rs485Uart_ --rts=rts --rx=rx --tx=tx --baud_rate=baud_rate
 
 
   /**
@@ -112,7 +112,11 @@ class Rs485Uart_ implements Rs485:
   writing_ /bool := false
 
   constructor --rx/gpio.Pin --tx/gpio.Pin --rts/gpio.Pin?=null --.baud_rate/int:
-    port_ = uart.Port --rx=rx --tx=tx --rts=rts --baud_rate=baud_rate --stop_bits=uart.Port.STOP_BITS_1 --parity=uart.Port.PARITY_DISABLED
+    port_ = uart.Port --rx=rx --tx=tx --rts=rts
+        --baud_rate=baud_rate
+        --stop_bits=uart.Port.STOP_BITS_1
+        --parity=uart.Port.PARITY_DISABLED
+        --mode=uart.Port.MODE_RS485_HALF_DUPLEX
     set_mode --read
 
   read -> ByteArray?:
@@ -161,31 +165,6 @@ class Rs485HalfDuplexUart_ extends Rs485Uart_:
     return result
 
 /**
-Driver for RS-485 transceivers that use only one pin to switch read/write mode.
-
-This driver is also used when the microcontroller connects a single pin to the RE and DE pins of
-  the external chip.
-
-For example, Texas Instruments THVD8010 chip uses only one pin.
-*/
-class Rs485Uart1_ extends Rs485HalfDuplexUart_:
-  rts_ /gpio.Pin
-
-  /**
-  Constructs a RS485 transceiver that is connected with a UART and two GPIO pins.
-
-  The $rts pin must put the transceiver into read-mode when low, and into write mode when high. */
-  constructor --rts/gpio.Pin --rx/gpio.Pin --tx/gpio.Pin --baud_rate/int:
-    rts_ = rts
-    rts.config --output
-    super --rx=rx --tx=tx --baud_rate=baud_rate
-
-  set_mode --read/bool=false --write/bool=false:
-    if read == write: throw "INVALID_ARGUMENT"
-    rts_.set (read ? 0 : 1)
-    super --read=read --write=write
-
-/**
 Driver for RS-485 transceivers that use two pins two enable the receiver/transmitter.
 
 For example, the MAX485 chip uses two pins.
@@ -203,8 +182,8 @@ class Rs485Uart2_ extends Rs485HalfDuplexUart_:
   constructor --read_enable/gpio.Pin --write_enable/gpio.Pin --rx/gpio.Pin --tx/gpio.Pin --baud_rate/int:
     read_enable_ = read_enable
     write_enable_ = write_enable
-    read_enable.config --output
-    write_enable.config --output
+    read_enable.configure --output
+    write_enable.configure --output
     super --rx=rx --tx=tx --baud_rate=baud_rate
 
   set_mode --read/bool=false --write/bool=false:
