@@ -18,6 +18,8 @@ interface Rs485 implements reader.Reader:
   It is recommended to use a single pin and connect to the RE and DE pins of the
     external chip and use $(Rs485.constructor --rts --rx --tx --baud_rate) instead.
 
+  The $parity and $stop_bits parameters are passed to the UART. See $uart.Port.constructor.
+
   Example chips: Max485, SP3485.
   */
   constructor
@@ -25,24 +27,36 @@ interface Rs485 implements reader.Reader:
       --write_enable/gpio.Pin
       --rx/gpio.Pin
       --tx/gpio.Pin
-      --baud_rate/int:
+      --baud_rate/int
+      --parity/int=uart.Port.PARITY_DISABLED
+      --stop_bits/uart.StopBits=uart.Port.STOP_BITS_1:
     return Rs485Uart2_
         --read_enable=read_enable
         --write_enable=write_enable
         --rx=rx
         --tx=tx
         --baud_rate=baud_rate
+        --parity=parity
+        --stop_bits=stop_bits
 
   /**
   Constructs an RS485 transceiver.
 
   The $rts pin (request to send) must put the transceiver into read-mode when low, and into write mode when high.
 
+  The $parity and $stop_bits parameters are passed to the UART. See $uart.Port.constructor.
+
   Example chip: THVD8010.
   Example breakout board: Sparkfun BOB-10124
   */
-  constructor --rts/gpio.Pin --rx/gpio.Pin --tx/gpio.Pin --baud_rate/int:
-    return Rs485Uart_ --rts=rts --rx=rx --tx=tx --baud_rate=baud_rate
+  constructor
+      --rts/gpio.Pin
+      --rx/gpio.Pin
+      --tx/gpio.Pin
+      --baud_rate/int
+      --parity/int=uart.Port.PARITY_DISABLED
+      --stop_bits/uart.StopBits=uart.Port.STOP_BITS_1:
+    return Rs485Uart_ --rts=rts --rx=rx --tx=tx --baud_rate=baud_rate --parity=parity --stop_bits=stop_bits
 
 
   /**
@@ -51,9 +65,16 @@ interface Rs485 implements reader.Reader:
   Does not use any pin to switch read/write mode.
   This constructor is primarily used when running the RS-485 protocol over a simple UART line whithout
     using any transceiver chip.
+
+  The $parity and $stop_bits parameters are passed to the UART. See $uart.Port.constructor.
   */
-  constructor --rx/gpio.Pin --tx/gpio.Pin --baud_rate/int:
-    return Rs485Uart_ --rx=rx --tx=tx --baud_rate=baud_rate
+  constructor
+      --rx/gpio.Pin
+      --tx/gpio.Pin
+      --baud_rate/int
+      --parity/int=uart.Port.PARITY_DISABLED
+      --stop_bits/uart.StopBits=uart.Port.STOP_BITS_1:
+    return Rs485Uart_ --rx=rx --tx=tx --baud_rate=baud_rate --parity=parity --stop_bits=stop_bits
 
   /**
   The baud rate of this transceiver.
@@ -111,11 +132,17 @@ class Rs485Uart_ implements Rs485:
   baud_rate/int
   writing_ /bool := false
 
-  constructor --rx/gpio.Pin --tx/gpio.Pin --rts/gpio.Pin?=null --.baud_rate/int:
+  constructor
+      --rx/gpio.Pin
+      --tx/gpio.Pin
+      --rts/gpio.Pin?=null
+      --.baud_rate/int
+      --parity/int
+      --stop_bits/uart.StopBits:
     port_ = uart.Port --rx=rx --tx=tx --rts=rts
         --baud_rate=baud_rate
-        --stop_bits=uart.Port.STOP_BITS_1
-        --parity=uart.Port.PARITY_DISABLED
+        --stop_bits=stop_bits
+        --parity=parity
         --mode=uart.Port.MODE_RS485_HALF_DUPLEX
     set_mode --read
 
@@ -150,8 +177,13 @@ class Rs485Uart_ implements Rs485:
 Base class for UART-based RS-485 transceivers that are half-duplex.
 */
 class Rs485HalfDuplexUart_ extends Rs485Uart_:
-  constructor --rx/gpio.Pin --tx/gpio.Pin --baud_rate/int:
-    super --rx=rx --tx=tx --baud_rate=baud_rate
+  constructor
+      --rx/gpio.Pin
+      --tx/gpio.Pin
+      --baud_rate/int
+      --parity/int
+      --stop_bits/uart.StopBits:
+    super --rx=rx --tx=tx --baud_rate=baud_rate --parity=parity --stop_bits=stop_bits
 
   do_transmission [block] -> none:
     set_mode --write
@@ -179,12 +211,18 @@ class Rs485Uart2_ extends Rs485HalfDuplexUart_:
   The $read_enable pin must be active low and enables reading.
   The $write_enable pin must be active high and enables writing.
   */
-  constructor --read_enable/gpio.Pin --write_enable/gpio.Pin --rx/gpio.Pin --tx/gpio.Pin --baud_rate/int:
+  constructor --read_enable/gpio.Pin
+      --write_enable/gpio.Pin
+      --rx/gpio.Pin
+      --tx/gpio.Pin
+      --baud_rate/int
+      --parity/int
+      --stop_bits/uart.StopBits:
     read_enable_ = read_enable
     write_enable_ = write_enable
     read_enable.configure --output
     write_enable.configure --output
-    super --rx=rx --tx=tx --baud_rate=baud_rate
+    super --rx=rx --tx=tx --baud_rate=baud_rate --parity=parity --stop_bits=stop_bits
 
   set_mode --read/bool=false --write/bool=false:
     if read == write: throw "INVALID_ARGUMENT"
