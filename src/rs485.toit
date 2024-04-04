@@ -11,41 +11,41 @@ interface Rs485 implements old-reader.Reader:
   /**
   Constructs an RS-485 transceiver.
 
-  The $rx and $tx pins are used to construct a UART with the given $baud_rate.
+  The $rx and $tx pins are used to construct a UART with the given $baud-rate.
 
-  The $read_enable pin must be active low and enables reading.
-  The $write_enable pin must be active high and enables writing.
+  The $read-enable pin must be active low and enables reading.
+  The $write-enable pin must be active high and enables writing.
 
   It is recommended to use a single pin and connect to the RE and DE pins of the
-    external chip and use $(Rs485.constructor --rts --rx --tx --baud_rate) instead.
+    external chip and use $(Rs485.constructor --rts --rx --tx --baud-rate) instead.
 
-  The $parity and $stop_bits parameters are passed to the UART. See $uart.Port.constructor.
+  The $parity and $stop-bits parameters are passed to the UART. See $uart.Port.constructor.
 
   Example chips: Max485, SP3485.
   */
   constructor
-      --read_enable/gpio.Pin
-      --write_enable/gpio.Pin
+      --read-enable/gpio.Pin
+      --write-enable/gpio.Pin
       --rx/gpio.Pin
       --tx/gpio.Pin
-      --baud_rate/int
-      --parity/int=uart.Port.PARITY_DISABLED
-      --stop_bits/uart.StopBits=uart.Port.STOP_BITS_1:
+      --baud-rate/int
+      --parity/int=uart.Port.PARITY-DISABLED
+      --stop-bits/uart.StopBits=uart.Port.STOP-BITS-1:
     return Rs485Uart2_
-        --read_enable=read_enable
-        --write_enable=write_enable
+        --read-enable=read-enable
+        --write-enable=write-enable
         --rx=rx
         --tx=tx
-        --baud_rate=baud_rate
+        --baud-rate=baud-rate
         --parity=parity
-        --stop_bits=stop_bits
+        --stop-bits=stop-bits
 
   /**
   Constructs an RS485 transceiver.
 
   The $rts pin (request to send) must put the transceiver into read-mode when low, and into write mode when high.
 
-  The $parity and $stop_bits parameters are passed to the UART. See $uart.Port.constructor.
+  The $parity and $stop-bits parameters are passed to the UART. See $uart.Port.constructor.
 
   Example chip: THVD8010.
   Example breakout board: Sparkfun BOB-10124
@@ -54,10 +54,10 @@ interface Rs485 implements old-reader.Reader:
       --rts/gpio.Pin
       --rx/gpio.Pin
       --tx/gpio.Pin
-      --baud_rate/int
-      --parity/int=uart.Port.PARITY_DISABLED
-      --stop_bits/uart.StopBits=uart.Port.STOP_BITS_1:
-    return Rs485Uart_ --rts=rts --rx=rx --tx=tx --baud_rate=baud_rate --parity=parity --stop_bits=stop_bits
+      --baud-rate/int
+      --parity/int=uart.Port.PARITY-DISABLED
+      --stop-bits/uart.StopBits=uart.Port.STOP-BITS-1:
+    return Rs485Uart_ --rts=rts --rx=rx --tx=tx --baud-rate=baud-rate --parity=parity --stop-bits=stop-bits
 
 
   /**
@@ -67,20 +67,20 @@ interface Rs485 implements old-reader.Reader:
   This constructor is primarily used when running the RS-485 protocol over a simple UART line whithout
     using any transceiver chip.
 
-  The $parity and $stop_bits parameters are passed to the UART. See $uart.Port.constructor.
+  The $parity and $stop-bits parameters are passed to the UART. See $uart.Port.constructor.
   */
   constructor
       --rx/gpio.Pin
       --tx/gpio.Pin
-      --baud_rate/int
-      --parity/int=uart.Port.PARITY_DISABLED
-      --stop_bits/uart.StopBits=uart.Port.STOP_BITS_1:
-    return Rs485Uart_ --rx=rx --tx=tx --baud_rate=baud_rate --parity=parity --stop_bits=stop_bits
+      --baud-rate/int
+      --parity/int=uart.Port.PARITY-DISABLED
+      --stop-bits/uart.StopBits=uart.Port.STOP-BITS-1:
+    return Rs485Uart_ --rx=rx --tx=tx --baud-rate=baud-rate --parity=parity --stop-bits=stop-bits
 
   /**
   The baud rate of this transceiver.
   */
-  baud_rate -> int
+  baud-rate -> int
 
   /**
   Reads data from the RS485 line.
@@ -112,7 +112,7 @@ interface Rs485 implements old-reader.Reader:
 
   Exactly one of $read or $write must be true.
   */
-  set_mode --read/bool=false --write/bool=false
+  set-mode --read/bool=false --write/bool=false
 
   /**
   Calls the given $block in output mode.
@@ -121,7 +121,7 @@ interface Rs485 implements old-reader.Reader:
     enough time has passed for the last byte to have been emitted on the RS-485 line. Then switches the
     mode to read.
   */
-  do_transmission [block] -> none
+  do-transmission [block] -> none
 
   /**
   Closes the transceiver.
@@ -137,7 +137,7 @@ Without any directional pins, this class is either used to simulate RS-485 commu
 */
 class Rs485Uart_ extends Object with io.InMixin io.OutMixin implements Rs485:
   port_ /uart.Port
-  baud_rate/int
+  baud-rate/int
   writing_ /bool := false
   reader_/io.Reader
   writer_/io.Writer
@@ -146,17 +146,17 @@ class Rs485Uart_ extends Object with io.InMixin io.OutMixin implements Rs485:
       --rx/gpio.Pin
       --tx/gpio.Pin
       --rts/gpio.Pin?=null
-      --.baud_rate/int
+      --.baud-rate/int
       --parity/int
-      --stop_bits/uart.StopBits:
+      --stop-bits/uart.StopBits:
     port_ = uart.Port --rx=rx --tx=tx --rts=rts
-        --baud_rate=baud_rate
-        --stop_bits=stop_bits
+        --baud-rate=baud-rate
+        --stop-bits=stop-bits
         --parity=parity
-        --mode=uart.Port.MODE_RS485_HALF_DUPLEX
+        --mode=uart.Port.MODE-RS485-HALF-DUPLEX
     reader_ = port_.in
     writer_ = port_.out
-    set_mode --read
+    set-mode --read
 
   /**
   Deprecated. Use ($in).read instead.
@@ -183,16 +183,16 @@ class Rs485Uart_ extends Object with io.InMixin io.OutMixin implements Rs485:
   # Inheritance:
   Subclasses must call this method using `super`.
   */
-  set_mode --read/bool=false --write/bool=false:
+  set-mode --read/bool=false --write/bool=false:
     if read == write: throw "INVALID_ARGUMENT"
     writing_ = write
 
-  do_transmission [block] -> none:
-    set_mode --write
+  do-transmission [block] -> none:
+    set-mode --write
     try:
       block.call
     finally:
-      set_mode --read
+      set-mode --read
 
   close:
     port_.close
@@ -204,17 +204,17 @@ class Rs485HalfDuplexUart_ extends Rs485Uart_:
   constructor
       --rx/gpio.Pin
       --tx/gpio.Pin
-      --baud_rate/int
+      --baud-rate/int
       --parity/int
-      --stop_bits/uart.StopBits:
-    super --rx=rx --tx=tx --baud_rate=baud_rate --parity=parity --stop_bits=stop_bits
+      --stop-bits/uart.StopBits:
+    super --rx=rx --tx=tx --baud-rate=baud-rate --parity=parity --stop-bits=stop-bits
 
-  do_transmission [block] -> none:
-    set_mode --write
+  do-transmission [block] -> none:
+    set-mode --write
     try:
       block.call
     finally:
-      set_mode --read
+      set-mode --read
 
   try-write_ data/io.Data from/int=0 to/int=data.byte-size -> int:
     result := super data from to
@@ -226,34 +226,34 @@ Driver for RS-485 transceivers that use two pins two enable the receiver/transmi
 For example, the MAX485 chip uses two pins.
 */
 class Rs485Uart2_ extends Rs485HalfDuplexUart_:
-  read_enable_ /gpio.Pin
-  write_enable_ /gpio.Pin
+  read-enable_ /gpio.Pin
+  write-enable_ /gpio.Pin
 
   /**
   Constructs a RS485 transceiver that is connected with a UART and two GPIO pins.
 
-  The $read_enable pin must be active low and enables reading.
-  The $write_enable pin must be active high and enables writing.
+  The $read-enable pin must be active low and enables reading.
+  The $write-enable pin must be active high and enables writing.
   */
-  constructor --read_enable/gpio.Pin
-      --write_enable/gpio.Pin
+  constructor --read-enable/gpio.Pin
+      --write-enable/gpio.Pin
       --rx/gpio.Pin
       --tx/gpio.Pin
-      --baud_rate/int
+      --baud-rate/int
       --parity/int
-      --stop_bits/uart.StopBits:
-    read_enable_ = read_enable
-    write_enable_ = write_enable
-    read_enable.configure --output
-    write_enable.configure --output
-    super --rx=rx --tx=tx --baud_rate=baud_rate --parity=parity --stop_bits=stop_bits
+      --stop-bits/uart.StopBits:
+    read-enable_ = read-enable
+    write-enable_ = write-enable
+    read-enable.configure --output
+    write-enable.configure --output
+    super --rx=rx --tx=tx --baud-rate=baud-rate --parity=parity --stop-bits=stop-bits
 
-  set_mode --read/bool=false --write/bool=false:
+  set-mode --read/bool=false --write/bool=false:
     if read == write: throw "INVALID_ARGUMENT"
     if read:
-      read_enable_.set 0
-      write_enable_.set 1
+      read-enable_.set 0
+      write-enable_.set 1
     else:
-      read_enable_.set 1
-      write_enable_.set 0
+      read-enable_.set 1
+      write-enable_.set 0
     super --read=read --write=write
