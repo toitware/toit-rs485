@@ -4,4 +4,4 @@ name: rs485
 description: Support for the RS-485 bus with drivers for the MAX485, SP3485 and similar chips.
 
 environment:
-  sdk: ^2.0.0-alpha.39
+  sdk: ^2.0.0-alpha.144

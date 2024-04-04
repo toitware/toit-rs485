@@ -2,11 +2,12 @@
 // Use of this source code is governed by an MIT-style license that can be
 // found in the LICENSE file.
 
-import uart
 import gpio
-import reader
+import io
+import uart
+import reader as old-reader
 
-interface Rs485 implements reader.Reader:
+interface Rs485 implements old-reader.Reader:
   /**
   Constructs an RS-485 transceiver.
 
@@ -88,6 +89,8 @@ interface Rs485 implements reader.Reader:
 
   If the transceiver is not in input mode, then the read function will not receive any data.
     However, it is possible to start reading an then to change the transceiver to input mode.
+
+  Deprecated. Use ($in).read instead.
   */
   read -> ByteArray?
 
@@ -96,8 +99,13 @@ interface Rs485 implements reader.Reader:
 
   The transceiver must be in write mode.
   Returns the amount of bytes that were written.
+
+  Deprecated. Use ($out).write or ($out).try-write instead.
   */
   write data from/int=0 to/int=data.size -> int
+
+  in -> io.Reader
+  out -> io.Writer
 
   /**
   Sets the mode of the transceiver.
@@ -127,10 +135,12 @@ Without any directional pins, this class is either used to simulate RS-485 commu
   over a UART line, or by a transceiver with separate read and write lines (4-wire), like the
   MAX488, or MAX490.
 */
-class Rs485Uart_ implements Rs485:
+class Rs485Uart_ extends Object with io.InMixin io.OutMixin implements Rs485:
   port_ /uart.Port
   baud_rate/int
   writing_ /bool := false
+  reader_/io.Reader
+  writer_/io.Writer
 
   constructor
       --rx/gpio.Pin
@@ -144,16 +154,30 @@ class Rs485Uart_ implements Rs485:
         --stop_bits=stop_bits
         --parity=parity
         --mode=uart.Port.MODE_RS485_HALF_DUPLEX
+    reader_ = port_.in
+    writer_ = port_.out
     set_mode --read
 
+  /**
+  Deprecated. Use ($in).read instead.
+  */
   read -> ByteArray?:
-    return port_.read
+    return in.read
 
+  read_ -> ByteArray?:
+    return reader_.read
+
+  /**
+  Deprecated. Use ($out).write or ($out).try-write instead.
+  */
   write data from/int=0 to/int=data.size -> int:
+    return try-write_ data from to
+
+  try-write_ data/io.Data from/int=0 to/int=data.byte-size -> int:
     if not writing_: throw "INVALID_STATE"
     // TODO(florian): we would prefer to just call `flush` at the end of the $do_transmission, but
     // UARTs currently don't have any way to do that.
-    return port_.write data from to --wait
+    return writer_.write data from to --flush
 
   /**
   # Inheritance:
@@ -192,7 +216,7 @@ class Rs485HalfDuplexUart_ extends Rs485Uart_:
     finally:
       set_mode --read
 
-  write data from/int=0 to/int=data.size -> int:
+  try-write_ data/io.Data from/int=0 to/int=data.byte-size -> int:
     result := super data from to
     return result
 
