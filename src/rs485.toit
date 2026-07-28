@@ -22,12 +22,23 @@ interface Rs485 implements old-reader.Reader:
   The $parity and $stop-bits parameters are passed to the UART. See $uart.Port.constructor.
 
   Example chips: Max485, SP3485.
+
+  The pins are GPIO numbers. Passing a $gpio.Pin is deprecated; provide the integer
+    GPIO number instead.
   */
+  // __TYPE-MIGRATION__ read-enable: gpio.Pin. Deprecated. Provide an integer instead.
+  // __TYPE-MIGRATION__ read-enable: int
+  // __TYPE-MIGRATION__ write-enable: gpio.Pin. Deprecated. Provide an integer instead.
+  // __TYPE-MIGRATION__ write-enable: int
+  // __TYPE-MIGRATION__ rx: gpio.Pin. Deprecated. Provide an integer instead.
+  // __TYPE-MIGRATION__ rx: int
+  // __TYPE-MIGRATION__ tx: gpio.Pin. Deprecated. Provide an integer instead.
+  // __TYPE-MIGRATION__ tx: int
   constructor
-      --read-enable/gpio.Pin
-      --write-enable/gpio.Pin
-      --rx/gpio.Pin
-      --tx/gpio.Pin
+      --read-enable/any
+      --write-enable/any
+      --rx/any
+      --tx/any
       --baud-rate/int
       --parity/int=uart.Port.PARITY-DISABLED
       --stop-bits/uart.StopBits=uart.Port.STOP-BITS-1:
@@ -49,11 +60,20 @@ interface Rs485 implements old-reader.Reader:
 
   Example chip: THVD8010.
   Example breakout board: Sparkfun BOB-10124
+
+  The pins are GPIO numbers. Passing a $gpio.Pin is deprecated; provide the integer
+    GPIO number instead.
   */
+  // __TYPE-MIGRATION__ rts: gpio.Pin. Deprecated. Provide an integer instead.
+  // __TYPE-MIGRATION__ rts: int
+  // __TYPE-MIGRATION__ rx: gpio.Pin. Deprecated. Provide an integer instead.
+  // __TYPE-MIGRATION__ rx: int
+  // __TYPE-MIGRATION__ tx: gpio.Pin. Deprecated. Provide an integer instead.
+  // __TYPE-MIGRATION__ tx: int
   constructor
-      --rts/gpio.Pin
-      --rx/gpio.Pin
-      --tx/gpio.Pin
+      --rts/any
+      --rx/any
+      --tx/any
       --baud-rate/int
       --parity/int=uart.Port.PARITY-DISABLED
       --stop-bits/uart.StopBits=uart.Port.STOP-BITS-1:
@@ -68,10 +88,17 @@ interface Rs485 implements old-reader.Reader:
     using any transceiver chip.
 
   The $parity and $stop-bits parameters are passed to the UART. See $uart.Port.constructor.
+
+  The pins are GPIO numbers. Passing a $gpio.Pin is deprecated; provide the integer
+    GPIO number instead.
   */
+  // __TYPE-MIGRATION__ rx: gpio.Pin. Deprecated. Provide an integer instead.
+  // __TYPE-MIGRATION__ rx: int
+  // __TYPE-MIGRATION__ tx: gpio.Pin. Deprecated. Provide an integer instead.
+  // __TYPE-MIGRATION__ tx: int
   constructor
-      --rx/gpio.Pin
-      --tx/gpio.Pin
+      --rx/any
+      --tx/any
       --baud-rate/int
       --parity/int=uart.Port.PARITY-DISABLED
       --stop-bits/uart.StopBits=uart.Port.STOP-BITS-1:
@@ -143,9 +170,9 @@ class Rs485Uart_ extends Object with io.InMixin io.OutMixin implements Rs485:
   writer_/io.Writer
 
   constructor
-      --rx/gpio.Pin
-      --tx/gpio.Pin
-      --rts/gpio.Pin?=null
+      --rx/any
+      --tx/any
+      --rts/any=null
       --.baud-rate/int
       --parity/int
       --stop-bits/uart.StopBits:
@@ -202,8 +229,8 @@ Base class for UART-based RS-485 transceivers that are half-duplex.
 */
 class Rs485HalfDuplexUart_ extends Rs485Uart_:
   constructor
-      --rx/gpio.Pin
-      --tx/gpio.Pin
+      --rx/any
+      --tx/any
       --baud-rate/int
       --parity/int
       --stop-bits/uart.StopBits:
@@ -228,6 +255,9 @@ For example, the MAX485 chip uses two pins.
 class Rs485Uart2_ extends Rs485HalfDuplexUart_:
   read-enable_ /gpio.Pin
   write-enable_ /gpio.Pin
+  // GPIO pins the driver created itself (from an integer argument) and must
+  // therefore close again. Empty when the caller passed a (deprecated) gpio.Pin.
+  created-pins_ /List := []
 
   /**
   Constructs a RS485 transceiver that is connected with a UART and two GPIO pins.
@@ -235,17 +265,25 @@ class Rs485Uart2_ extends Rs485HalfDuplexUart_:
   The $read-enable pin must be active low and enables reading.
   The $write-enable pin must be active high and enables writing.
   */
-  constructor --read-enable/gpio.Pin
-      --write-enable/gpio.Pin
-      --rx/gpio.Pin
-      --tx/gpio.Pin
+  constructor --read-enable/any
+      --write-enable/any
+      --rx/any
+      --tx/any
       --baud-rate/int
       --parity/int
       --stop-bits/uart.StopBits:
-    read-enable_ = read-enable
-    write-enable_ = write-enable
-    read-enable.configure --output
-    write-enable.configure --output
+    if read-enable is int:
+      read-enable_ = gpio.Pin read-enable --output
+      created-pins_.add read-enable_
+    else:
+      read-enable_ = read-enable as gpio.Pin
+      read-enable_.configure --output
+    if write-enable is int:
+      write-enable_ = gpio.Pin write-enable --output
+      created-pins_.add write-enable_
+    else:
+      write-enable_ = write-enable as gpio.Pin
+      write-enable_.configure --output
     super --rx=rx --tx=tx --baud-rate=baud-rate --parity=parity --stop-bits=stop-bits
 
   set-mode --read/bool=false --write/bool=false:
@@ -257,3 +295,8 @@ class Rs485Uart2_ extends Rs485HalfDuplexUart_:
       read-enable_.set 1
       write-enable_.set 0
     super --read=read --write=write
+
+  close:
+    super
+    created-pins_.do: it.close
+    created-pins_.clear
