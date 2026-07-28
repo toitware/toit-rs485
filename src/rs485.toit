@@ -299,3 +299,4 @@ class Rs485Uart2_ extends Rs485HalfDuplexUart_:
   close:
     super
     created-pins_.do: it.close
+    created-pins_.clear
